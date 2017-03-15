@@ -26,7 +26,7 @@ BorderWall::BorderWall(int w, int h) {
 }
 
 void BorderWall::coordinate(int x,int y){
-     COORD pos = {x,y};   
+    COORD pos = {x,y};   
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);   
 }
 
@@ -37,10 +37,7 @@ void BorderWall::displayBorder() {
 			if( (i==1) || (j==1) || (i==width) || (j==hieght) ) {
 				coordinate(i, j);
 				std::cout << "X";
-			} //else {
-			//	coordinate(i, j);
-			//	cout << "";
-		//	}			
+			} 
 		}
 	}
 }
@@ -55,13 +52,13 @@ class MovingWall {
 	int yStart;
 	int width;
 	int hieght;
-
-	
+	int xMoving;	
 	
 public:
 	MovingWall(int, int, int, int);
 	void coordinate(int ,int);
-	void setWall(int);
+	void setXMoving();
+	int setWall(int);
 	void moveWall();
 	int setGapLocation();
 };
@@ -71,6 +68,7 @@ MovingWall::MovingWall(int x, int y, int w, int h) {
 	yStart = y;
 	width = w;
 	hieght = h;
+	xMoving = x;
 }
 
 void MovingWall::coordinate(int x,int y){
@@ -78,32 +76,38 @@ void MovingWall::coordinate(int x,int y){
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);   
 }
 
-void MovingWall::setWall(int gapLocation) {
+void MovingWall::setXMoving() {
+	xMoving = xStart;
+}
+
+int MovingWall::setWall(int gapLocation) {
 	moveWall();
-	for(int i = xStart; i < width+xStart; i++) {
-		for(int j = yStart; j < gapLocation; j++) {
-			coordinate(i, j);
-			cout << "#";
+	if(xMoving > 1) {
+		for(int i = xMoving; i < width+xMoving; i++) {
+			for(int j = yStart; j < gapLocation; j++) {
+				coordinate(i, j);
+				cout << "#";
+			}
+		}	
+		for(int i = xMoving; i < width+xMoving; i++) {
+			for(int j = gapLocation+5; j < hieght+yStart; j++) {
+				coordinate(i, j);
+				cout << "#";
+			}
 		}
-	}	
-	for(int i = xStart; i < width+xStart; i++) {
-		for(int j = gapLocation+5; j < hieght+yStart; j++) {
-			coordinate(i, j);
-			cout << "#";
-		}
+	} else {
+		setXMoving();
 	}
+	return xMoving;
 }
 
 void MovingWall::moveWall() {
-	xStart--;	
+	xMoving--;	
 }
 
 int MovingWall::setGapLocation() {
 	return (rand()%10+5);
 }
-
-
-
 
 
 //**********************************
@@ -120,7 +124,7 @@ class Avatar {
 public:
 	Avatar(int, int);
 	void coordinate(int, int);
-	void displayAvatar();
+	int displayAvatar();
 	void avatarGravity();
 	void flyUp(int);
 	int keyInput();
@@ -138,11 +142,12 @@ void Avatar::coordinate(int x,int y){
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);   
 }
 
-void Avatar::displayAvatar() {
+int Avatar::displayAvatar() {
 	avatarGravity();
+	flyUp(keyInput());
 	coordinate(xPos, yPos);
-	cout << ">><>";
-		
+	cout << ">>";
+	return yPos;		
 }
 
 void Avatar::avatarGravity() {
@@ -154,8 +159,7 @@ void Avatar::avatarGravity() {
 	else if(yPos < 2){
 		yPos=2;
 	} else {
-		yPos += gravity;
-	
+		yPos += gravity;	
 	}
 }
 
@@ -184,64 +188,47 @@ class GamePlay {
 	int wallW = 2;
 	int wallH = borderH-1;
 	int wallXStart = borderW-wallW;
-	int walls[3] = {0};
+	int wallPos[3] = {wallXStart};
+	int wallGap[3] = {0};
+	int flappyY = 0;
 	
 public:
-	GamePlay();
-	void movingWalls();
-	void play();	
+	void play();
 	
 };
 
-GamePlay::GamePlay() {
-	
+void GamePlay::play() {	
+
 	BorderWall border(borderW, borderH);
 	MovingWall wall(wallXStart, 1, wallW, wallH);
 	Avatar avatar(borderW, borderH);
 	
-}
-
-
-void GamePlay::play() {
-
-	
-	BorderWall border(borderW, borderH);
-	MovingWall wall(wallXStart, 1, wallW, wallH);
-	Avatar avatar(borderW, borderH);
-	
-
 	
 	do {
 		
-		
-		
-		
 		system("cls");
+				
 		
-		for(int i = 0; i < 3; i++) {
-			if(walls[i] == 0) {
-				walls[i] = wall.setGapLocation();
-			}
-		}
+		if(wallPos[0] == wallXStart) {
+			wallGap[0] = wall.setGapLocation();
+		}		
 		
+		wallPos[0] = wall.setWall(wallGap[0]);
 		
-	/*
-		wallXStart--;
-		
-		if(wallXStart==1) {
-			wallXStart = borderW-wallW;
-		}
-		
-*/
-		wall.setWall(walls[0]);
+
+		flappyY = avatar.displayAvatar();
 		border.displayBorder();
-		avatar.displayAvatar();
-		avatar.flyUp(avatar.keyInput());
+		
+		cout << flappyY << " " << wallPos[0];
+		if( ((borderW/5)+1 == wallPos[0]) && ((flappyY  < wallGap[0]) || (flappyY > wallGap[0]+5)) ) {
+			system("PAUSE");
+		}
+		
+	
+		for(int delay = 1; delay <= 60000000; delay++);
 
 		
-		for(int delay = 1; delay <= 60000000; delay++);
-	
-		} while (wallXStart > 1);	
+	} while (true);	
 }
 
 int main() {
