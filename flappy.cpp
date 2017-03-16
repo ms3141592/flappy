@@ -106,7 +106,7 @@ void MovingWall::moveWall() {
 }
 
 int MovingWall::setGapLocation() {
-	return (rand()%10+5);
+	return (rand()%17+6);
 }
 
 
@@ -153,8 +153,8 @@ int Avatar::displayAvatar() {
 void Avatar::avatarGravity() {
 	//velocity+=gravity;
 	//************** change to variables
-	if(yPos >= 23 ) {
-		yPos = 23;
+	if(yPos >= 29 ) {
+		yPos = 29;
 	} 
 	else if(yPos < 2){
 		yPos=2;
@@ -165,7 +165,7 @@ void Avatar::avatarGravity() {
 
 void Avatar::flyUp(int keyInput) {
 	if(keyInput == 32) {
-		yPos-=3;
+		yPos-=2;
 	}
 }
 
@@ -180,56 +180,123 @@ int Avatar::keyInput() {
 
 
 //**********************************
+// start screen
+
+class StartScreen {
+	string choice[2] = {"1.Start", "2.Quit"};
+	int picked = 0;
+	public:
+		void coordinate(int, int);
+		int options();
+};
+
+void StartScreen::coordinate(int x,int y){
+    COORD pos = {x,y};   
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);   
+}
+
+int StartScreen::options() {
+	
+	coordinate(10, 6);
+	cout << "Flappy";
+	for(int i = 0; i < 2; i++) {
+		coordinate(10, 8+i);
+		cout << choice[i];
+	}
+	
+	coordinate(10, 13);
+	cout << ">> ";
+	cin >> picked;
+	return picked;
+}
+
+
+//**********************************
 // game play
 
 class GamePlay {
-	int borderW = 40;
-	int borderH = 24;
-	int wallW = 2;
+	int borderW = 28;
+	int borderH = 30;
+	int wallW = 3;
 	int wallH = borderH-1;
 	int wallXStart = borderW-wallW;
-	int wallPos[3] = {wallXStart};
-	int wallGap[3] = {0};
+	int wallPos = borderW-wallW;
+	int wallGap = 0;
 	int flappyY = 0;
+	int score = 0;
+	int option = 0;
+	bool gameOn;
 	
 public:
 	void play();
-	
-};
+	void gameOver();
+		
+};              
+
+void GamePlay::gameOver() {	
+	cout << " X\t***************\n"
+		<<" X\t    GAME OVER\n"
+		<< " X\t***************\n";
+}
 
 void GamePlay::play() {	
 
 	BorderWall border(borderW, borderH);
-	MovingWall wall(wallXStart, 1, wallW, wallH);
+	MovingWall wall(borderW-wallW, 1, wallW, wallH);
 	Avatar avatar(borderW, borderH);
+	StartScreen start;
+	gameOn = false;
+	
+	border.displayBorder();
+	option = start.options();
+	if(option == 1) {
+		gameOn = true;
+	}
+	
 	
 	
 	do {
 		
 		system("cls");
 				
+	
+		if(wallPos == wallXStart) {
+			wallGap = wall.setGapLocation();
+		}
+
 		
-		if(wallPos[0] == wallXStart) {
-			wallGap[0] = wall.setGapLocation();
-		}		
+		wallPos = wall.setWall(wallGap);
+
+				
 		
-		wallPos[0] = wall.setWall(wallGap[0]);
+		if( (((borderW/5)+1 >= wallPos) && ((borderW/5)-wallW <= wallPos) ) && ((flappyY  < wallGap) || (flappyY > wallGap+5)) ) {
+			gameOn = false;
+			wall.coordinate(0, 10);
+			gameOver();
+		}
+		if(wallPos == borderW/6 ) {
+			score++;
+		}
 		
+		
+		wall.coordinate(32, 3);
+		cout << "score: " << score;
 
 		flappyY = avatar.displayAvatar();
 		border.displayBorder();
 		
-		cout << flappyY << " " << wallPos[0];
-		if( ((borderW/5)+1 == wallPos[0]) && ((flappyY  < wallGap[0]) || (flappyY > wallGap[0]+5)) ) {
-			system("PAUSE");
-		}
-		
-	
 		for(int delay = 1; delay <= 60000000; delay++);
 
 		
-	} while (true);	
+	} while (gameOn);	
 }
+
+
+
+//**********************************
+// main()
+
+
 
 int main() {
     srand(time(0));	
