@@ -32,9 +32,9 @@ void BorderWall::coordinate(int x,int y){
 
 void BorderWall::displayBorder() {
 	// border 
-	for(int i = 1; i <= width; i++) {
-		for(int j = 1; j <= hieght; j++) {
-			if( (i==1) || (j==1) || (i==width) || (j==hieght) ) {
+	for(int i = 0; i < width; i++) {
+		for(int j = 0; j < hieght; j++) {
+			if( (i==0) || (j==0) || (i==width-1) || (j==hieght-1) ) {
 				coordinate(i, j);
 				std::cout << "X";
 			} 
@@ -106,7 +106,7 @@ void MovingWall::moveWall() {
 }
 
 int MovingWall::setGapLocation() {
-	return (rand()%17+6);
+	return (rand()%12+4);
 }
 
 
@@ -153,11 +153,11 @@ int Avatar::displayAvatar() {
 void Avatar::avatarGravity() {
 	//velocity+=gravity;
 	//************** change to variables
-	if(yPos >= 29 ) {
-		yPos = 29;
+	if(yPos >= 23 ) {
+		yPos = 23;
 	} 
-	else if(yPos < 2){
-		yPos=2;
+	else if(yPos < 1){
+		yPos=1;
 	} else {
 		yPos += gravity;	
 	}
@@ -216,7 +216,7 @@ int StartScreen::options() {
 
 class GamePlay {
 	int borderW = 28;
-	int borderH = 30;
+	int borderH = 25;
 	int wallW = 3;
 	int wallH = borderH-1;
 	int wallXStart = borderW-wallW;
@@ -225,21 +225,22 @@ class GamePlay {
 	int flappyY = 0;
 	int score = 0;
 	int option = 0;
+	char cont;
 	bool gameOn;
 	
 public:
-	void play();
+	bool play();
 	void gameOver();
 		
 };              
 
 void GamePlay::gameOver() {	
-	cout << " X\t***************\n"
-		<<" X\t    GAME OVER\n"
-		<< " X\t***************\n";
+	cout << "\t***************\n"
+		<<"\t    GAME OVER\n"
+		<< "\t***************\n";
 }
 
-void GamePlay::play() {	
+bool GamePlay::play() {	
 
 	BorderWall border(borderW, borderH);
 	MovingWall wall(borderW-wallW, 1, wallW, wallH);
@@ -268,11 +269,30 @@ void GamePlay::play() {
 		wallPos = wall.setWall(wallGap);
 
 				
-		
+		// collision
 		if( (((borderW/5)+1 >= wallPos) && ((borderW/5)-wallW <= wallPos) ) && ((flappyY  < wallGap) || (flappyY > wallGap+5)) ) {
 			gameOn = false;
 			wall.coordinate(0, 10);
 			gameOver();
+			
+			
+			wall.coordinate(32, 3);
+			cout << "score: " << score;
+			
+			wall.coordinate(5, 15);
+			cout << "continue (y)/(n)";
+			wall.coordinate(12, 16);
+			cin >> cont;
+			if(cont=='y' || cont=='Y') {
+
+				
+				
+				system("cls");
+				return true;
+			}else{
+				return false;
+			}
+			
 		}
 		if(wallPos == borderW/6 ) {
 			score++;
@@ -285,10 +305,11 @@ void GamePlay::play() {
 		flappyY = avatar.displayAvatar();
 		border.displayBorder();
 		
-		for(int delay = 1; delay <= 60000000; delay++);
+		for(int delay = 1; delay <= 50000000; delay++);
 
 		
-	} while (gameOn);	
+	} while (gameOn);
+	
 }
 
 
@@ -299,11 +320,18 @@ void GamePlay::play() {
 
 
 int main() {
+	bool keepPlaying = false;
+	
     srand(time(0));	
     
 	GamePlay newGame;
 	
-	newGame.play();
+	do {
+		keepPlaying = newGame.play();
+		
+	} while(keepPlaying);
+	
+
 	
 
 	
