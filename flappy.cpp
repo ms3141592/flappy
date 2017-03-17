@@ -6,6 +6,15 @@
 
 using namespace std;
 
+
+// seperate coordinate function to use through the code
+coordinate(int x,int y){
+    COORD pos = {x,y};   
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);   
+
+}
+
+
 //**********************************
 // border wall
 
@@ -14,20 +23,12 @@ class BorderWall {
 	
 public:
 	BorderWall(int,int);
-	void coordinate(int,int);
 	void displayBorder();
-
 };
-
 
 BorderWall::BorderWall(int w, int h) {
 	width = w;
 	hieght = h;
-}
-
-void BorderWall::coordinate(int x,int y){
-    COORD pos = {x,y};   
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);   
 }
 
 void BorderWall::displayBorder() {
@@ -56,24 +57,18 @@ class MovingWall {
 	
 public:
 	MovingWall(int, int, int, int);
-	void coordinate(int ,int);
-	void setXMoving();
+	void setXMoving(); // refresh start location
 	int setWall(int);
 	void moveWall();
 	int setGapLocation();
 };
 
 MovingWall::MovingWall(int x, int y, int w, int h) {
-	xStart = x;
+	xStart = x; // permanent start location
 	yStart = y;
 	width = w;
 	hieght = h;
-	xMoving = x;
-}
-
-void MovingWall::coordinate(int x,int y){
-    COORD pos = {x,y};   
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);   
+	xMoving = x; // refresh start location of wall
 }
 
 void MovingWall::setXMoving() {
@@ -83,12 +78,14 @@ void MovingWall::setXMoving() {
 int MovingWall::setWall(int gapLocation) {
 	moveWall();
 	if(xMoving > 1) {
+		// top wall
 		for(int i = xMoving; i < width+xMoving; i++) {
 			for(int j = yStart; j < gapLocation; j++) {
 				coordinate(i, j);
 				cout << "#";
 			}
-		}	
+		}
+		// bot wall
 		for(int i = xMoving; i < width+xMoving; i++) {
 			for(int j = gapLocation+5; j < hieght+yStart; j++) {
 				coordinate(i, j);
@@ -118,12 +115,11 @@ class Avatar {
 	int yPos;
 	int borderW;
 	int borderH;
-	int gravity = 1;
+	int gravity = 1; // change in y
 //	int velocity = 0;
 	
 public:
 	Avatar(int, int);
-	void coordinate(int, int);
 	int displayAvatar();
 	void avatarGravity();
 	void flyUp(int);
@@ -137,11 +133,6 @@ Avatar::Avatar(int borderW, int borderH) {
 	yPos = (borderH/3);
 }
 
-void Avatar::coordinate(int x,int y){
-    COORD pos = {x,y};   
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);   
-}
-
 int Avatar::displayAvatar() {
 	avatarGravity();
 	flyUp(keyInput());
@@ -152,9 +143,8 @@ int Avatar::displayAvatar() {
 
 void Avatar::avatarGravity() {
 	//velocity+=gravity;
-	//************** change to variables
-	if(yPos >= 23 ) {
-		yPos = 23;
+	if(yPos >= borderH-2) {
+		yPos = borderH-2;
 	} 
 	else if(yPos < 1){
 		yPos=1;
@@ -185,26 +175,21 @@ int Avatar::keyInput() {
 class StartScreen {
 	string choice[2] = {"1.Start", "2.Quit"};
 	int picked = 0;
-	public:
-		void coordinate(int, int);
-		int options();
+public:
+	int options();
 };
-
-void StartScreen::coordinate(int x,int y){
-    COORD pos = {x,y};   
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);   
-}
 
 int StartScreen::options() {
 	
 	coordinate(10, 6);
-	cout << "Flappy";
+	cout << "FLAPPY!";
+	
 	for(int i = 0; i < 2; i++) {
 		coordinate(10, 8+i);
 		cout << choice[i];
 	}
 	
-	coordinate(10, 13);
+	coordinate(10, 11);
 	cout << ">> ";
 	cin >> picked;
 	return picked;
@@ -225,19 +210,66 @@ class GamePlay {
 	int flappyY = 0;
 	int score = 0;
 	int option = 0;
+	int spacebar = 0;
 	char cont;
 	bool gameOn;
+	bool keepPlaying;
 	
 public:
-	bool play();
 	void gameOver();
-		
+	void displayStart();
+	void displayScore(int, int);
+	void trackScore();
+	bool collision();
+	bool play();
 };              
 
 void GamePlay::gameOver() {	
-	cout << "\t***************\n"
-		<<"\t    GAME OVER\n"
-		<< "\t***************\n";
+	system("CLS");
+	coordinate(0, 10);
+	cout <<"\t***************\n"
+		<<"\t   GAME OVER\n"
+		<<"\t***************\n";
+}
+
+void GamePlay::displayStart() {
+	if(option == 1) {
+		gameOn = true;
+		score = 0;
+	}
+	if(option == 2) {
+		exit(0);
+	}	
+}
+
+void GamePlay::displayScore(int x, int y) {
+	coordinate(x, y);
+	cout << "score: " << score;
+}
+
+void GamePlay::trackScore() {
+	if(wallPos == borderW/6 ) {
+		score++;
+	}
+}
+
+bool GamePlay::collision() {
+	if( (((borderW/5)+1 >= wallPos) && ((borderW/5)-wallW <= wallPos) ) && ((flappyY  < wallGap) || (flappyY > wallGap+5)) ) {
+		gameOn = false;
+			
+		gameOver();				
+		displayScore(32, 3);			
+		coordinate(5, 15);
+		cout << "continue (y)/(n)";
+		coordinate(12, 16);
+		cin >> cont;
+		system("CLS");
+		if(cont=='y' || cont=='Y') {
+			return true;
+		}else{
+			return false;
+		}			
+	}
 }
 
 bool GamePlay::play() {	
@@ -246,95 +278,52 @@ bool GamePlay::play() {
 	MovingWall wall(borderW-wallW, 1, wallW, wallH);
 	Avatar avatar(borderW, borderH);
 	StartScreen start;
-	gameOn = false;
 	
 	border.displayBorder();
 	option = start.options();
-	if(option == 1) {
-		gameOn = true;
-	}
-	
-	
-	
+
+	displayStart();
+
 	do {
-		
-		system("cls");
-				
+		coordinate(2, 14);
+		cout << "Press \"SPACEBAR\" to fly!\n";
+		spacebar = avatar.keyInput();
+	} while (spacebar != 32);
+
+	
+	do {		
+		system("CLS");				
 	
 		if(wallPos == wallXStart) {
 			wallGap = wall.setGapLocation();
 		}
-
 		
-		wallPos = wall.setWall(wallGap);
-
-				
-		// collision
-		if( (((borderW/5)+1 >= wallPos) && ((borderW/5)-wallW <= wallPos) ) && ((flappyY  < wallGap) || (flappyY > wallGap+5)) ) {
-			gameOn = false;
-			wall.coordinate(0, 10);
-			gameOver();
-			
-			
-			wall.coordinate(32, 3);
-			cout << "score: " << score;
-			
-			wall.coordinate(5, 15);
-			cout << "continue (y)/(n)";
-			wall.coordinate(12, 16);
-			cin >> cont;
-			if(cont=='y' || cont=='Y') {
-
-				
-				
-				system("cls");
-				return true;
-			}else{
-				return false;
-			}
-			
-		}
-		if(wallPos == borderW/6 ) {
-			score++;
-		}
-		
-		
-		wall.coordinate(32, 3);
-		cout << "score: " << score;
-
 		flappyY = avatar.displayAvatar();
 		border.displayBorder();
+		wallPos = wall.setWall(wallGap);		
+		keepPlaying = collision();
+		trackScore();		
+		displayScore(32, 3);
 		
 		for(int delay = 1; delay <= 50000000; delay++);
-
-		
 	} while (gameOn);
-	
+	return keepPlaying;
 }
-
 
 
 //**********************************
 // main()
 
-
-
 int main() {
-	bool keepPlaying = false;
+	srand(time(0));
 	
-    srand(time(0));	
-    
+	bool keepPlaying = false;	   
 	GamePlay newGame;
 	
 	do {
 		keepPlaying = newGame.play();
 		
-	} while(keepPlaying);
-	
-
-	
-
-	
+	} while (keepPlaying);
 
 	return 0;
 }
