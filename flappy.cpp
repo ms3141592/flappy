@@ -1,3 +1,4 @@
+// ghetto flabby bird
 #include<conio.h>
 #include<cstdlib>
 #include<ctime>
@@ -8,10 +9,9 @@ using namespace std;
 
 
 // seperate coordinate function to use through the code
-coordinate(int x,int y){
+void coordinate(int x,int y){
     COORD pos = {x,y};   
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);   
-
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
 }
 
 
@@ -116,7 +116,6 @@ class Avatar {
 	int borderW;
 	int borderH;
 	int gravity = 1; // change in y
-//	int velocity = 0;
 	
 public:
 	Avatar(int, int);
@@ -254,6 +253,7 @@ void GamePlay::trackScore() {
 }
 
 bool GamePlay::collision() {
+	bool hit;
 	if( (((borderW/5)+1 >= wallPos) && ((borderW/5)-wallW <= wallPos) ) && ((flappyY  < wallGap) || (flappyY > wallGap+5)) ) {
 		gameOn = false;
 			
@@ -265,14 +265,15 @@ bool GamePlay::collision() {
 		cin >> cont;
 		system("CLS");
 		if(cont=='y' || cont=='Y') {
-			return true;
+			hit = true;
 		}else{
-			return false;
+			hit = false;
 		}			
 	}
+	return hit;
 }
 
-bool GamePlay::play() {	
+bool GamePlay::play() {
 
 	BorderWall border(borderW, borderH);
 	MovingWall wall(borderW-wallW, 1, wallW, wallH);
